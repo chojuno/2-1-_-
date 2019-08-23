@@ -1,9 +1,13 @@
+#기온 데이터 불러오기
 from urllib.request import urlopen, Request
 import urllib
 import bs4
 
+#사는 위치, 나이, 성별 구분 입력
 location, age, gen = input().split()
 age1=int(age)
+
+#인터넷에서 원하는 데이터 찾기
 enc_location = urllib.parse.quote(location + '+날씨')
 enc_particle = urllib.parse.quote(location + '+미세먼지')
 enc_fparticle = urllib.parse.quote(location + '+초미세먼지')
@@ -11,6 +15,7 @@ enc_Mlocation = urllib.parse.quote(location + '+최고기온')
 enc_mlocation = urllib.parse.quote(location + '+최저기온')
 enc_UVlocation = urllib.parse.quote(location + '+ 날씨')
 
+#각각의 데이터의 주소 
 url1 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_location
 url2 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_particle
 url3 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_fparticle
@@ -48,6 +53,7 @@ soup4 = bs4.BeautifulSoup(html4,'html5lib')
 soup5 = bs4.BeautifulSoup(html5,'html5lib')
 soup6 = bs4.BeautifulSoup(html6,'html5lib')
 
+#기온 데이터 출력
 print('현재 ' + location + ' 날씨는 ' + soup1.find('p', class_='info_temperature').find('span', class_='todaytemp').text + '도 입니다.')
 print('현재 ' + location + ' 미세먼지 농도는 ' + soup2.find('span', class_='figure').find('em', class_='main_figure').text + ' 입니다.')
 print('현재 ' + location + ' 초미세먼지 농도는 ' + soup3.find('span', class_='figure').find('em', class_='main_figure').text + ' 입니다.')
@@ -89,20 +95,22 @@ def dust():
 #자외선 지수가 UV_ray가 입력된다
 def UV():
     if  int(soup6.find('span', class_='indicator').find('span', class_='num').text)<=2:
-        return '햇빛위험도 낮음'
+        print('햇빛위험도 낮음')
     if  2<int(soup6.find('span', class_='indicator').find('span', class_='num').text)<=5:
-        return '60분 이상 햇빛 노출 자제'
+        print('60분 이상 햇빛 노출 자제')
     if 5< int(soup6.find('span', class_='indicator').find('span', class_='num').text)<=7:
-        return '50분 이상 햇빛 노출 자제'
+       print( '50분 이상 햇빛 노출 자제')
     if 7<int(soup6.find('span', class_='indicator').find('span', class_='num').text)<=10:
-        return '40분 이상 햇빛 노출 자제'
+        print('40분 이상 햇빛 노출 자제')
     if 10< int(soup6.find('span', class_='indicator').find('span', class_='num').text):
-        return '30분 이상 햇빛 노출 자제'
+        print('30분 이상 햇빛 노출 자제')
+    if age >= 65 and int(soup6.find('span', class_='indicator').find('span', class_='num').text)>2:
+        print('되도록 외출을 삼가주시고, 자외선 차단제를 사용해주세요)
  
 print('오늘 공기는 종합적으로 ',round(age_num()*gen_num()*(temp()*fine_dust()*dust() - 1)*100, 1), '% 더 심각하네요!')
 print('오늘 미세먼지는 ',round(age_num()*gen_num()*(dust() - 1)*100,2), '% 더 심각하네요!')
 print('오늘  초미세먼지는 ',round(age_num()*gen_num()*(fine_dust() - 1)*100,2), '% 더 심각하네요!')
 print('오늘  일교차는 ',round(age_num()*gen_num()*(temp() - 1)*100,2), '% 더 심각하네요!')
-print(UV())
+UV()
   
 #각 함수의 출력값은 위험도를 비율로 나타내며 각 세함수의 곱이 최종 심각도로 정의된다
