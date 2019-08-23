@@ -15,7 +15,7 @@ enc_Mlocation = urllib.parse.quote(location + '+최고기온')
 enc_mlocation = urllib.parse.quote(location + '+최저기온')
 enc_UVlocation = urllib.parse.quote(location + '+ 날씨')
 
-#각각의 데이터의 주소
+#각각의 데이터의 주소 
 url1 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_location
 url2 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_particle
 url3 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_fparticle
