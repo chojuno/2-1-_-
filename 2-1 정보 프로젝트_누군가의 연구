@@ -1,63 +1,42 @@
-from urllib.request import urlopen, Request
-import urllib
-import bs4
-
-location, age, gen = input().split()
-age1=int(age)
-enc_location = urllib.parse.quote(location + '+날씨')
-enc_particle = urllib.parse.quote(location + '+미세먼지')
-enc_fparticle = urllib.parse.quote(location + '+초미세먼지')
-enc_Mlocation = urllib.parse.quote(location + '+최고기온')
-enc_mlocation = urllib.parse.quote(location + '+최저기온')
-enc_UVlocation = urllib.parse.quote(location + '+ 날씨')
-
-url1 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_location
-url2 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_particle
-url3 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_fparticle
-url4 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_Mlocation 
-url5 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_mlocation
-url6 = 'https://search.naver.com/search.naver?ie=utf8&query='+ enc_UVlocation
-
-
-
-req1 = Request(url1)
-req2 = Request(url2)
-req3 = Request(url3)
-req4 = Request(url4)
-req5 = Request(url5)
-req6 = Request(url6)
-
-page1 = urlopen(req1)
-page2 = urlopen(req2)
-page3 = urlopen(req3)
-page4 = urlopen(req4)
-page5 = urlopen(req5)
-page6 = urlopen(req6)
-
-html1 = page1.read()
-html2 = page2.read()
-html3 = page3.read()
-html4 = page4.read()
-html5 = page5.read()
-html6 = page6.read()
-
-soup1 = bs4.BeautifulSoup(html1,'html5lib')
-soup2 = bs4.BeautifulSoup(html2,'html5lib')
-soup3 = bs4.BeautifulSoup(html3,'html5lib')
-soup4 = bs4.BeautifulSoup(html4,'html5lib')
-soup5 = bs4.BeautifulSoup(html5,'html5lib')
-soup6 = bs4.BeautifulSoup(html6,'html5lib')
-
-print('현재 ' + location + ' 날씨는 ' + soup1.find('p', class_='info_temperature').find('span', class_='todaytemp').text + '도 입니다.')
-print('현재 ' + location + ' 미세먼지 농도는 ' + soup2.find('span', class_='figure').find('em', class_='main_figure').text + ' 입니다.')
-print('현재 ' + location + ' 초미세먼지 농도는 ' + soup3.find('span', class_='figure').find('em', class_='main_figure').text + ' 입니다.')
-print('현재 ' + location + ' 최고기온은' + soup4.find('span', class_='max').find('span', class_='num').text + '도 입니다')
-print('현재 ' + location + ' 최저기온은' + soup5.find('span', class_='min').find('span', class_='num').text + '도 입니다')
-print('현재 ' + location + ' 자외선지수는' + soup6.find('span', class_='indicator').find('span', class_='num').text + '입니다')
-
-#반환값:최고기온= high ,최저기온=low ,미세먼지 농도=dust, 초미세먼지=fine dust,
-#나이별 심각도 25;1;5(인구비율)
-def age_num():
+from selenium import webdriver
+from bs4 import BeautifulSoup
+import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+def weat_search(s_name):  
+    result=[]
+    s_link='https://search.naver.com/search.naver?sm=top_hty&fbm=1&ie=utf8&query='+s_name+' 날씨'
+    options_1 = webdriver.ChromeOptions()
+    options_1.add_argument('headless')
+    options_1.add_argument('window-size=1920x1080')
+    options_1.add_argument("disable-gpu")
+    driver = webdriver.Chrome('chromedriver.exe')
+    driver.get(s_link)
+    try:
+        WebDriverWait(driver,5).until(EC.presence_of_element_located((By.ID, "#main_pack > div.sc.cs_weather._weather > div:nth-child(2) > div.weather_box")))
+    except TimeoutException:
+        pass
+    finally:
+        html=driver.page_source
+    soup = BeautifulSoup(html, 'html.parser')
+    a=soup.select('#main_pack > div.sc.cs_weather._weather > div:nth-child(2) > div.weather_box > div.weather_area._mainArea > div.today_area._mainTabContent > div.main_info > div > p > span.todaytemp')
+    result.append(float(a[0].text))#현재기온
+    a=soup.select('#main_pack > div.sc.cs_weather._weather > div:nth-child(2) > div.weather_box > div.weather_area._mainArea > div.today_area._mainTabContent > div.main_info > div > ul > li:nth-child(2) > span.merge > span.min > span')
+    result.append(float(a[0].text))#최저기온
+    a=soup.select('#main_pack > div.sc.cs_weather._weather > div:nth-child(2) > div.weather_box > div.weather_area._mainArea > div.today_area._mainTabContent > div.main_info > div > ul > li:nth-child(2) > span.merge > span.max > span')
+    result.append(float(a[0].text))#최고기온
+    a=soup.select('#main_pack > div.sc.cs_weather._weather > div:nth-child(2) > div.weather_box > div.weather_area._mainArea > div.today_area._mainTabContent > div.sub_info > div > dl > dd:nth-child(2) > span.num')
+    result.append(a[0].text)#미세먼지 농도
+    a=soup.select('#main_pack > div.sc.cs_weather._weather > div:nth-child(2) > div.weather_box > div.weather_area._mainArea > div.today_area._mainTabContent > div.sub_info > div > dl > dd:nth-child(4) > span.num')
+    result.append(a[0].text)#초미세먼지 농도
+    a=soup.select('#main_pack > div.sc.cs_weather._weather > div:nth-child(2) > div.weather_box > div.weather_area._mainArea > div.today_area._mainTabContent > div.sub_info > div > dl > dd:nth-child(6) > span.num')
+    result.append(a[0].text)#오존 지수
+    a=soup.select('#main_pack > div.sc.cs_weather._weather > div:nth-child(2) > div.weather_box > div.weather_area._mainArea > div.today_area._mainTabContent > div.main_info > div > ul > li:nth-child(3) > span > span > span.num')
+    result.append(float(a[0].text))#자외선 지수
+    return result
+def age_num(age1):
     if age1<=15:
         agenum = 0.866
     if 15<age1<=65:
@@ -65,44 +44,62 @@ def age_num():
     if age1>65:
         agenum = 0.166
     return agenum
-def gen_num():
-    if gen=='남자':
+def gen_num(gen):
+    if gen=='M':
         gennum = 0.25
-    else:
+    elif gen=='W':
         gennum = 0.75
 
     return gennum
 
 
-def temp():
-    s1=1-0.066*(float(soup4.find('span', class_='min').find('span', class_='num').text) -float(soup5.find('span', class_='max').find('span', class_='num').text))
+def temp(result):
+    s1=1-0.066*(float(result[2]) -float(result[1]))
     return s1
  
-def fine_dust():
-    s2=1+0.016*(float(soup3.find('span', class_='figure').find('em', class_='main_figure').text))
+def fine_dust(result):
+    s2=1+0.016*(float(result[4]))
     return s2
  
-def dust():
-    s3=1+0.011*(float(soup2.find('span', class_='figure').find('em', class_='main_figure').text))
+def dust(result):
+    s3=1+0.011*(float(result[3]))
     return s3
  
 #자외선 지수가 UV_ray가 입력된다
-def UV():
-    if  int(soup6.find('span', class_='indicator').find('span', class_='num').text)<=2:
+def UV(result):
+    if int(result[6])<=2:
         return '햇빛위험도 낮음'
-    if  2<int(soup6.find('span', class_='indicator').find('span', class_='num').text)<=5:
+    elif 2<int(result[6])<=5:
         return '60분 이상 햇빛 노출 자제'
-    if 5< int(soup6.find('span', class_='indicator').find('span', class_='num').text)<=7:
+    elif 5< int(result[6])<=7:
         return '50분 이상 햇빛 노출 자제'
-    if 7<int(soup6.find('span', class_='indicator').find('span', class_='num').text)<=10:
+    elif 7<int(result[6])<=10:
         return '40분 이상 햇빛 노출 자제'
-    if 10< int(soup6.find('span', class_='indicator').find('span', class_='num').text):
+    elif 10< int(result[6]):
         return '30분 이상 햇빛 노출 자제'
+location, age, gen = input().split(' ')
+age=int(age)
+result=weat_search(location)
+print('현재 ' + location + ' 날씨는 ' + str(result[0]) + '도 입니다.')
+print('현재 ' + location + ' 미세먼지 농도는 ' + result[3] + ' 입니다.')
+print('현재 ' + location + ' 초미세먼지 농도는 ' + result[4] + ' 입니다.')
+print('현재 ' + location + ' 최고기온은' + str(result[2]) + '도 입니다')
+print('현재 ' + location + ' 최저기온은' + str(result[1]) + '도 입니다')
+print('현재 ' + location + ' 자외선지수는' + str(result[6]) + '입니다')
+print('현재 ' + location + ' 오존지수는' + result[5] + '입니다')
+temp1=0
+for i in result:#단위 제거
+    if temp1==3 or temp1==4 or temp1==5:
+        result[temp1]=float(i[:-3])       
+    temp1+=1    
+#반환값:최고기온= high ,최저기온=low ,미세먼지 농도=dust, 초미세먼지=fine dust,
+#나이별 심각도 25;1;5(인구비율)
+
  
-print('오늘 공기는 종합적으로 ',round(age_num()*gen_num()*(temp()*fine_dust()*dust() - 1)*100, 1), '% 더 심각하네요!')
-print('오늘 미세먼지는 ',round(age_num()*gen_num()*(dust() - 1)*100,2), '% 더 심각하네요!')
-print('오늘  초미세먼지는 ',round(age_num()*gen_num()*(fine_dust() - 1)*100,2), '% 더 심각하네요!')
-print('오늘  일교차는 ',round(age_num()*gen_num()*(temp() - 1)*100,2), '% 더 심각하네요!')
-print(UV())
+print('오늘 공기는 종합적으로 '+str(round(age_num(age)*gen_num(gen)*(temp(result)*fine_dust(result)*dust(result) - 1),2)*100)+ '% 더 심각하네요!')
+print('오늘 미세먼지는 '+str(round(age_num(age)*gen_num(gen)*(dust(result) - 1)*100,2))+ '% 더 심각하네요!')
+print('오늘  초미세먼지는 '+str(round(age_num(age)*gen_num(gen)*(fine_dust(result) - 1)*100,2))+ '% 더 심각하네요!')
+print('오늘  일교차는 '+str(round(age_num(age)*gen_num(gen)*(temp(result) - 1)*100,2))+ '% 더 심각하네요!')
+print(UV(result))
   
 #각 함수의 출력값은 위험도를 비율로 나타내며 각 세함수의 곱이 최종 심각도로 정의된다
